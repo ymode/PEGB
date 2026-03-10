@@ -4,6 +4,8 @@ A Game Boy emulator running on the [Pimoroni Explorer](https://shop.pimoroni.com
 
 Built on top of [Peanut-GB](https://github.com/deltabeard/Peanut-GB) by deltabeard — a single-header Game Boy (DMG) emulator designed for embedded systems.
 
+<img src="https://github.com/user-attachments/assets/d951a080-ec59-4070-a4e4-1db5a977e8b9" width="300">
+
 ## Hardware
 
 - **Board:** Pimoroni Explorer (RP2350B, 48 GPIO, 520 KB SRAM, 16 MB flash)
