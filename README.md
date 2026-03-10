@@ -1,4 +1,4 @@
-# PEGB
+# PEGB 📌🐝
 
 A Game Boy emulator running on the [Pimoroni Explorer](https://shop.pimoroni.com/products/explorer) (RP2350B).
 
