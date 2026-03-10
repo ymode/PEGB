@@ -1,0 +1,14 @@
+build/
+lib/
+pico_sdk_import.cmake
+roms/*.gb
+roms/*.gbc
+src/rom_data.h
+*.uf2
+*.elf
+*.bin
+*.hex
+*.dis
+*.map
+.vscode/
+/tmp/

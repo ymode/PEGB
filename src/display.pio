@@ -1,0 +1,13 @@
+;
+; PIO program for 8-bit parallel writes to ST7789.
+; Outputs 8 data bits on consecutive GPIOs while strobing WR low/high.
+; Data is latched by the display on the rising edge of WR.
+;
+
+.program st7789_parallel
+.side_set 1
+
+.wrap_target
+    out pins, 8    side 0   ; Put byte on D0-D7, WR low
+    nop            side 1   ; WR high → data latched
+.wrap
