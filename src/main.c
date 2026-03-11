@@ -7,6 +7,7 @@
 #include "hw_config.h"
 #include "display.h"
 #include "input.h"
+#include "menu.h"
 
 // Audio library
 #define AUDIO_SAMPLE_RATE 32768
@@ -114,9 +115,11 @@ static void audio_play_frame(void) {
 
 // --- Peanut-GB callbacks ---
 
+static int current_rom = 0;
+
 uint8_t gb_rom_read(struct gb_s *gb, const uint_fast32_t addr) {
     (void)gb;
-    return rom_data[addr];
+    return rom_list[current_rom].data[addr];
 }
 
 uint8_t gb_cart_ram_read(struct gb_s *gb, const uint_fast32_t addr) {
@@ -144,6 +147,25 @@ void lcd_draw_line(struct gb_s *gb, const uint8_t *pixels, const uint_fast8_t li
     }
 }
 
+// --- Emulator init ---
+
+static struct gb_s gb;
+
+static void emu_init(void) {
+    memset(cart_ram, 0, sizeof(cart_ram));
+
+    enum gb_init_error_e err = gb_init(&gb,
+        gb_rom_read, gb_cart_ram_read, gb_cart_ram_write,
+        gb_error, NULL);
+
+    if (err != GB_INIT_NO_ERROR) {
+        display_fill(0xF800);
+        while (1) tight_loop_contents();
+    }
+
+    gb_init_lcd(&gb, lcd_draw_line);
+}
+
 // --- Main ---
 
 int main(void) {
@@ -156,21 +178,28 @@ int main(void) {
     input_init();
     audio_init();
 
-    struct gb_s gb;
-    enum gb_init_error_e err = gb_init(&gb,
-        gb_rom_read, gb_cart_ram_read, gb_cart_ram_write,
-        gb_error, NULL);
-
-    if (err != GB_INIT_NO_ERROR) {
-        display_fill(0xF800);
-        while (1) tight_loop_contents();
+    // Show menu on startup if multiple ROMs available
+    if (ROM_COUNT > 1) {
+        current_rom = menu_select_game(framebuf, ROM_COUNT, 0);
     }
 
-    gb_init_lcd(&gb, lcd_draw_line);
+    emu_init();
 
     // Main emulation loop
     while (1) {
         joypad_t jp = input_read();
+
+        // Select button opens game menu
+        if (!jp.bits.select && ROM_COUNT > 1) {
+            int choice = menu_select_game(framebuf, ROM_COUNT, current_rom);
+            if (choice != current_rom) {
+                current_rom = choice;
+                emu_init();
+            }
+            // Re-read joypad after menu exits
+            jp = input_read();
+        }
+
         gb.direct.joypad = jp.byte;
 
         gb_run_frame(&gb);

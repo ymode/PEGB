@@ -16,6 +16,7 @@ add_executable(pe_gbc
     src/main.c
     src/display.c
     src/input.c
+    src/menu.c
     lib/minigb_apu/minigb_apu.c
 )
 
