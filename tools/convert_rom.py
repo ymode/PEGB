@@ -36,6 +36,16 @@ def main():
         else:
             rom_files.append(arg)
 
+    # De-duplicate (*.gb and *.GB can overlap on case-insensitive filesystems)
+    seen = set()
+    deduped = []
+    for path in rom_files:
+        key = os.path.normcase(os.path.abspath(path))
+        if key not in seen:
+            seen.add(key)
+            deduped.append(path)
+    rom_files = deduped
+
     if not rom_files:
         print("No .gb files found")
         sys.exit(1)
