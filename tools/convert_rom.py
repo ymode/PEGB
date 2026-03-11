@@ -11,6 +11,26 @@ import sys
 import os
 import glob
 
+def escape_c_string(s):
+    """Escape a string for safe inclusion in a C string literal."""
+    result = []
+    for ch in s:
+        if ch == '\\':
+            result.append('\\\\')
+        elif ch == '"':
+            result.append('\\"')
+        elif ch == '\n':
+            result.append('\\n')
+        elif ch == '\r':
+            result.append('\\r')
+        elif ch == '\t':
+            result.append('\\t')
+        elif ord(ch) < 32 or ord(ch) == 127:
+            result.append(f'\\x{ord(ch):02x}')
+        else:
+            result.append(ch)
+    return ''.join(result)
+
 def get_rom_title(data):
     """Extract game title from ROM header (0x134-0x143)."""
     raw = data[0x134:0x144]
@@ -58,7 +78,9 @@ def main():
 
         # Write each ROM as a separate array
         for title, var_name, data, filename in roms:
-            f.write(f"// {filename} - \"{title}\" ({len(data)} bytes)\n")
+            safe_title = escape_c_string(title)
+            safe_filename = escape_c_string(filename)
+            f.write(f"// {safe_filename} - \"{safe_title}\" ({len(data)} bytes)\n")
             f.write(f"static const uint8_t {var_name}[] = {{\n")
             for i in range(0, len(data), 16):
                 chunk = data[i:i+16]
@@ -76,7 +98,8 @@ def main():
         f.write(f"#define ROM_COUNT {len(roms)}\n\n")
         f.write("static const rom_entry_t rom_list[ROM_COUNT] = {\n")
         for title, var_name, data, filename in roms:
-            f.write(f"    {{ \"{title}\", {var_name}, {len(data)} }},\n")
+            safe_title = escape_c_string(title)
+            f.write(f"    {{ \"{safe_title}\", {var_name}, {len(data)} }},\n")
         f.write("};\n\n")
 
         f.write("#endif // ROM_DATA_H\n")
