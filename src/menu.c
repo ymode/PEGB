@@ -95,7 +95,8 @@ int menu_select_game(uint16_t *framebuf, int rom_count, int current) {
         sleep_ms(10);
     }
 
-    uint8_t prev_byte = 0xFF; // All released
+    // Prime prev_byte from actual hardware state to avoid spurious presses
+    uint8_t prev_byte = input_read().byte;
 
     while (1) {
         draw_menu(framebuf, cursor, scroll, rom_count);
