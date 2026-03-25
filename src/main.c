@@ -119,6 +119,8 @@ static int current_rom = 0;
 
 uint8_t gb_rom_read(struct gb_s *gb, const uint_fast32_t addr) {
     (void)gb;
+    if (addr >= rom_list[current_rom].size)
+        return 0xFF;
     return rom_list[current_rom].data[addr];
 }
 
