@@ -19,6 +19,9 @@ def escape_c_string(s):
             result.append('\\\\')
         elif ch == '"':
             result.append('\\"')
+        elif ch == '?':
+            # Prevent C11 trigraphs, including ??/ (backslash), even in comments.
+            result.append('\\?')
         elif ch == '\n':
             result.append('\\n')
         elif ch == '\r':
@@ -26,7 +29,8 @@ def escape_c_string(s):
         elif ch == '\t':
             result.append('\\t')
         elif ord(ch) < 32 or ord(ch) == 127:
-            result.append(f'\\x{ord(ch):02x}')
+            # Three octal digits cannot consume a following hex digit.
+            result.append(f'\\{ord(ch):03o}')
         else:
             result.append(ch)
     return ''.join(result)
@@ -55,6 +59,16 @@ def main():
             rom_files.extend(sorted(glob.glob(os.path.join(arg, "*.GB"))))
         else:
             rom_files.append(arg)
+
+    # De-duplicate (*.gb and *.GB can overlap on case-insensitive filesystems)
+    seen = set()
+    deduped = []
+    for path in rom_files:
+        key = os.path.normcase(os.path.abspath(path))
+        if key not in seen:
+            seen.add(key)
+            deduped.append(path)
+    rom_files = deduped
 
     if not rom_files:
         print("No .gb files found")
