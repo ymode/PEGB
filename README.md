@@ -68,9 +68,10 @@ make -j$(nproc)
 
 ## Host regression tests
 
-Run the ROM-read tests with Python 3 and a host C11 compiler (GCC or Clang):
+Run the host tests with Python 3 and a host C11 compiler (GCC or Clang):
 
 ```bash
+python3 tests/test_convert_rom.py
 python3 tests/test_rom_read.py
 python3 tests/test_rom_read.py --sanitize
 ```
@@ -88,6 +89,16 @@ against simulated ROM data. It checks every valid byte (including the last byte)
 bank boundaries, ROM switching, exact and beyond-end addresses, maximum address
 values, and zero-length ROMs with null and non-null data. These are host callback
 tests, not a firmware build or validation on RP2350 hardware.
+
+The converter tests create synthetic ROM headers and unusual filenames in a
+temporary directory, compile the generated headers as strict C11 with trigraphs
+enabled, and execute a host probe to compare every title and ROM byte. They cover
+quotes, backslashes, attempted C injection, filtered header controls, newline and
+control characters in filenames, directory discovery, de-duplication, and helper
+control escapes followed by hex digits. Filename cases are skipped explicitly if
+the filesystem cannot represent them. No repository ROM header is overwritten.
+Use `python3 tests/test_convert_rom.py --source path/to/convert_rom.py` to test
+another converter implementation.
 
 To compare with an older implementation, pass `--source path/to/main.c`.
 `--valid-only` checks unchanged in-range behavior without making invalid reads.
