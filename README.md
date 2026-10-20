@@ -68,6 +68,12 @@ make -j$(nproc)
 
 ## Host regression tests
 
+The `Host regression tests` GitHub Actions workflow runs on every push and pull
+request using Ubuntu, Python 3, and GCC. It executes both suites below, plus the
+ROM-read suite with ASan/UBSan. CI disables leak detection to avoid restricted
+runner `/proc` access; address and undefined-behavior failures still fail the job.
+This workflow does not install the Pico SDK, build firmware, or test hardware.
+
 Run the host tests with Python 3 and a host C11 compiler (GCC or Clang):
 
 ```bash
