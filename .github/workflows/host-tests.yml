@@ -41,3 +41,8 @@ jobs:
           # Avoid LeakSanitizer /proc restrictions; ASan and UBSan stay enabled.
           ASAN_OPTIONS: detect_leaks=0
         run: python3 tests/test_rom_read.py --sanitize
+
+      - name: Test cartridge RAM with ASan and UBSan
+        env:
+          ASAN_OPTIONS: detect_leaks=0
+        run: python3 tests/test_cart_ram.py --sanitize
