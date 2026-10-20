@@ -2,6 +2,7 @@
 #define INPUT_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 // Joypad bitfield matching Peanut-GB's gb.direct.joypad layout.
 // Each bit: 1 = released, 0 = pressed (active low).
@@ -18,6 +19,10 @@ typedef union {
     } bits;
     uint8_t byte;
 } joypad_t;
+
+static inline bool input_menu_requested(joypad_t jp) {
+    return !jp.bits.start && !jp.bits.select;
+}
 
 void input_init(void);
 joypad_t input_read(void);

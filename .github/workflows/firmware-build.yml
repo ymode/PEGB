@@ -39,7 +39,14 @@ jobs:
       - name: Generate synthetic ROM
         run: |
           python3 tests/make_test_rom.py roms/ci-smoke.gb
-          python3 tools/convert_rom.py roms/ci-smoke.gb
+          python3 tests/make_test_rom.py roms/ci-second.gb
+          python3 tools/convert_rom.py roms/ci-smoke.gb roms/ci-second.gb
+
+      - name: Exercise actual APU and game lifecycle with sanitizers
+        env:
+          CC: gcc
+          ASAN_OPTIONS: detect_leaks=0
+        run: python3 tests/test_runtime.py --sanitize --core lib/peanut-gb
 
       - name: Build Explorer firmware
         env:
@@ -48,3 +55,17 @@ jobs:
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build --parallel 2
           test -s build/pe_gbc.uf2
+
+      - name: Verify single ROM storage in the ARM executable
+        run: |
+          arm-none-eabi-nm -S --defined-only build/pe_gbc.elf > build/symbols.txt
+          python3 - <<'PY'
+          from collections import Counter
+          from pathlib import Path
+          import re
+          rows = [line.split() for line in Path('build/symbols.txt').read_text().splitlines()]
+          roms = [row for row in rows if re.fullmatch(r'rom_\d+', row[-1])]
+          assert Counter(row[-1] for row in roms) == {'rom_0': 1, 'rom_1': 1}, roms
+          assert all(int(row[1], 16) == 32768 for row in roms), roms
+          print('PASS: two 32 KiB ROM payloads, one instance each in the ARM ELF')
+          PY

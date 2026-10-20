@@ -90,6 +90,17 @@ def main():
         f.write("#include <stdint.h>\n")
         f.write("#include <stddef.h>\n\n")
 
+        # Public declarations are shared by every translation unit
+        f.write("typedef struct {\n")
+        f.write("    const char *title;\n")
+        f.write("    const uint8_t *data;\n")
+        f.write("    size_t size;\n")
+        f.write("} rom_entry_t;\n\n")
+
+        f.write(f"#define ROM_COUNT {len(roms)}\n\n")
+        f.write("extern const rom_entry_t rom_list[ROM_COUNT];\n\n")
+        f.write("#ifdef ROM_DATA_IMPLEMENTATION\n")
+
         # Write each ROM as a separate array
         for title, var_name, data, filename in roms:
             safe_title = escape_c_string(title)
@@ -102,20 +113,14 @@ def main():
                 f.write(f"    {hex_str},\n")
             f.write("};\n\n")
 
-        # Write ROM directory
-        f.write("typedef struct {\n")
-        f.write("    const char *title;\n")
-        f.write("    const uint8_t *data;\n")
-        f.write("    size_t size;\n")
-        f.write("} rom_entry_t;\n\n")
-
-        f.write(f"#define ROM_COUNT {len(roms)}\n\n")
-        f.write("static const rom_entry_t rom_list[ROM_COUNT] = {\n")
+        # Define storage in exactly one translation unit.
+        f.write("const rom_entry_t rom_list[ROM_COUNT] = {\n")
         for title, var_name, data, filename in roms:
             safe_title = escape_c_string(title)
             f.write(f"    {{ \"{safe_title}\", {var_name}, {len(data)} }},\n")
         f.write("};\n\n")
 
+        f.write("#endif\n\n")
         f.write("#endif // ROM_DATA_H\n")
 
     print(f"Wrote {out_path} with {len(roms)} ROM(s):")
