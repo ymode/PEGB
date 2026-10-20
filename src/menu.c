@@ -88,14 +88,10 @@ int menu_select_game(uint16_t *framebuf, int rom_count, int current) {
     if (cursor >= scroll + (int)MAX_VISIBLE)
         scroll = cursor - (int)MAX_VISIBLE + 1;
 
-    // Wait for Select to be released before entering menu
-    while (1) {
-        joypad_t jp = input_read();
-        if (jp.bits.select) break;  // select=1 means released (active low)
+    // Drain the opening chord (and any held action button) before accepting input.
+    while (input_read().byte != 0xFF)
         sleep_ms(10);
-    }
-
-    uint8_t prev_byte = 0xFF; // All released
+    uint8_t prev_byte = 0xFF;
 
     while (1) {
         draw_menu(framebuf, cursor, scroll, rom_count);
@@ -127,16 +123,14 @@ int menu_select_game(uint16_t *framebuf, int rom_count, int current) {
         }
         // A button (bit 0) = confirm
         if (pressed & (1 << 0)) {
-            // Wait for release
-            while (1) {
-                jp = input_read();
-                if (jp.bits.a) break;
+            while (input_read().byte != 0xFF)
                 sleep_ms(10);
-            }
             return cursor;
         }
         // B button (bit 1) = cancel, return current
         if (pressed & (1 << 1)) {
+            while (input_read().byte != 0xFF)
+                sleep_ms(10);
             return current;
         }
     }

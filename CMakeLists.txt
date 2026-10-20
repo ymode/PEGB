@@ -17,6 +17,9 @@ add_executable(pe_gbc
     src/display.c
     src/input.c
     src/menu.c
+    src/audio.c
+    src/audio_queue.c
+    src/timing.c
     src/cart_ram.c
     lib/peanut-gb/examples/sdl2/minigb_apu/minigb_apu.c
 )
@@ -45,6 +48,7 @@ target_link_libraries(pe_gbc
     hardware_pio
     hardware_dma
     hardware_pwm
+    hardware_sync
     hardware_clocks
     hardware_vreg
 )

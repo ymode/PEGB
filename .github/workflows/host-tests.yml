@@ -46,3 +46,8 @@ jobs:
         env:
           ASAN_OPTIONS: detect_leaks=0
         run: python3 tests/test_cart_ram.py --sanitize
+
+      - name: Test timing, audio queue, input and menu with sanitizers
+        env:
+          ASAN_OPTIONS: detect_leaks=0
+        run: python3 tests/test_runtime.py --sanitize

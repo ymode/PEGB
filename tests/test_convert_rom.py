@@ -40,7 +40,7 @@ class ConverterTests(unittest.TestCase):
         compiler = shlex.split(os.environ.get("CC", "cc"))
         # Explicitly enable trigraphs: the firmware uses C11, where they apply.
         compiled = subprocess.run(compiler + ["-std=c11", "-trigraphs", "-Wall", "-Wextra",
-                                   "-Werror", "-pedantic", str(c_file),
+                                   "-Werror", "-pedantic", "-DROM_DATA_IMPLEMENTATION", str(c_file),
                                    "-o", str(binary)], capture_output=True)
         self.assertEqual(compiled.returncode, 0, compiled.stderr.decode(errors="replace"))
         result = subprocess.run([str(binary)], check=True, capture_output=True)
@@ -118,6 +118,19 @@ int main(void) {
     return 0;
 }
 ''', b''.join(expected))
+
+    def test_single_storage_across_translation_units(self):
+        self.convert_and_check([("one.gb", b'ONE', 'ONE'),
+                                ("two.gb", b'TWO', 'TWO')])
+        (self.root / "owner.c").write_text('#define ROM_DATA_IMPLEMENTATION\n#include "src/rom_data.h"\nconst uint8_t *peer_data(unsigned i);\nint main(void) {\n    for (unsigned i = 0; i < ROM_COUNT; ++i)\n        if (peer_data(i) != rom_list[i].data) return 1;\n    return 0;\n}\n')
+        (self.root / "peer.c").write_text('#include "src/rom_data.h"\nconst uint8_t *peer_data(unsigned i) { return rom_list[i].data; }\n')
+        compiler = shlex.split(os.environ.get("CC", "cc"))
+        binary = self.root / "linked"
+        subprocess.run(compiler + ["-std=c11", "-Os", "-ffunction-sections",
+                       "-fdata-sections", "-Wl,--gc-sections",
+                       str(self.root / "owner.c"), str(self.root / "peer.c"),
+                       "-o", str(binary)], check=True)
+        subprocess.run([str(binary)], check=True)
 
     def test_header_titles(self):
         self.convert_and_check([
