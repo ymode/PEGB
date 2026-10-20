@@ -1,0 +1,43 @@
+name: Host regression tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  host-tests:
+    name: Host tests (GCC)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      CC: gcc
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      # Python 3 and GCC are preinstalled on the Ubuntu hosted runner.
+      - name: Show toolchain versions
+        run: |
+          python3 --version
+          gcc --version
+
+      - name: Test ROM converter
+        run: python3 tests/test_convert_rom.py -v
+
+      - name: Test ROM reads
+        run: python3 tests/test_rom_read.py
+
+      - name: Test ROM reads with ASan and UBSan
+        env:
+          # Avoid LeakSanitizer /proc restrictions; ASan and UBSan stay enabled.
+          ASAN_OPTIONS: detect_leaks=0
+        run: python3 tests/test_rom_read.py --sanitize
