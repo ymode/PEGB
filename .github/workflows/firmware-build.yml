@@ -1,0 +1,50 @@
+name: Firmware build
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firmware-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  firmware:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Install ARM toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
+
+      - name: Set up dependencies and check repeat setup
+        run: |
+          ./setup.sh
+          ./setup.sh
+
+      - name: Exercise cartridge RAM through Peanut-GB with sanitizers
+        env:
+          CC: gcc
+          ASAN_OPTIONS: detect_leaks=0
+        run: python3 tests/test_cart_ram.py --sanitize --core lib/peanut-gb
+
+      - name: Generate synthetic ROM
+        run: |
+          python3 tests/make_test_rom.py roms/ci-smoke.gb
+          python3 tools/convert_rom.py roms/ci-smoke.gb
+
+      - name: Build Explorer firmware
+        env:
+          PICO_SDK_PATH: ${{ github.workspace }}/lib/pico-sdk
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel 2
+          test -s build/pe_gbc.uf2

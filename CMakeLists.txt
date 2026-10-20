@@ -17,7 +17,8 @@ add_executable(pe_gbc
     src/display.c
     src/input.c
     src/menu.c
-    lib/minigb_apu/minigb_apu.c
+    src/cart_ram.c
+    lib/peanut-gb/examples/sdl2/minigb_apu/minigb_apu.c
 )
 
 pico_generate_pio_header(pe_gbc ${CMAKE_CURRENT_LIST_DIR}/src/display.pio)
@@ -25,7 +26,7 @@ pico_generate_pio_header(pe_gbc ${CMAKE_CURRENT_LIST_DIR}/src/display.pio)
 target_include_directories(pe_gbc PRIVATE
     src
     lib/peanut-gb
-    lib/minigb_apu
+    lib/peanut-gb/examples/sdl2/minigb_apu
 )
 
 # Overclock to 250 MHz for comfortable emulation headroom
